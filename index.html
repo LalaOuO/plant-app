@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-Hant"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#efe9e1">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<title>植物圖鑑</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#efe9e1;--card:#f7f3ed;--ink:#4a4540;--sub:#8f867c;--sage:#8a9a86;--rose:#b58f87;--line:#ddd4c8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Serif TC",serif;padding-top:env(safe-area-inset-top)}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 8px}
+h1{font-size:20px;margin:0;font-weight:600;letter-spacing:.08em}
+button{font-family:inherit;color:inherit}
+.ib{border:0;background:none;font-size:20px;padding:6px 10px;cursor:pointer}
+.tools{display:flex;gap:10px;padding:4px 18px 10px;align-items:center}
+.pill{border:1px solid var(--sage);background:none;color:var(--sage);border-radius:99px;padding:6px 14px;font-size:13px;cursor:pointer}
+.pill.on{background:var(--sage);color:#fff}
+#sz{width:90px;accent-color:var(--sage);margin-left:auto}
+main{padding:0 14px 170px}
+.row{display:flex;align-items:center;gap:14px;background:var(--card);border:1.5px solid transparent;border-radius:18px;padding:10px 14px;margin-bottom:9px;cursor:pointer;transition:.15s}
+.row.sel{border-color:var(--sage);background:#e7ebe3}
+.av{flex:none;border-radius:50%;overflow:hidden;background:#d9d2c6;display:grid;place-items:center;font-size:22px}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.info{flex:1;min-width:0}.nm{font-size:16px;font-weight:600}
+.meta{font-size:12px;color:var(--sub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.days{text-align:right;font-size:12px;color:var(--sub)}.days b{display:block;font-size:20px;color:var(--rose);font-weight:600}
+.empty{text-align:center;color:var(--sub);padding:60px 0;font-size:14px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(247,243,237,.92);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;padding:10px 0 8px;font-size:12px;color:var(--sub);cursor:pointer}
+nav button.on{color:var(--sage);font-weight:600}nav i{display:block;font-style:normal;font-size:19px}
+#bar{position:fixed;left:12px;right:12px;bottom:calc(64px + env(safe-area-inset-bottom));background:rgba(247,243,237,.95);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:20px;padding:10px 14px;display:none;align-items:center;gap:10px;box-shadow:0 6px 24px rgba(74,69,64,.15)}
+#bar.show{display:flex}
+#bar input[type=date]{font-family:inherit;border:1px solid var(--line);border-radius:10px;padding:6px;background:#fff;color:var(--ink)}
+#go{margin-left:auto;border:0;background:var(--sage);color:#fff;border-radius:99px;padding:10px 20px;font-size:15px;cursor:pointer}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom));background:var(--ink);color:#fff;border-radius:99px;padding:10px 18px;font-size:13px;display:none;gap:14px;align-items:center;z-index:9}
+#toast.show{display:flex}#toast button{border:0;background:none;color:#e9c9c1;font-size:13px;cursor:pointer}
+.sheet{position:fixed;inset:0;background:rgba(74,69,64,.4);display:none;align-items:flex-end;z-index:10}.sheet.show{display:flex}
+.sheet form{background:var(--bg);width:100%;max-height:88vh;overflow:auto;border-radius:24px 24px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom))}
+label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
+input,select,textarea{width:100%;font-family:inherit;font-size:15px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff;color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sub{width:100%;margin-top:18px;border:0;background:var(--sage);color:#fff;border-radius:99px;padding:12px;font-size:16px;cursor:pointer}
+</style></head><body>
+<header><h1>🌿 植物圖鑑</h1><div><button class="ib" id="add" title="新增植物">＋</button><button class="ib" id="cfg" title="設定">⚙︎</button></div></header>
+<div id="home"><div class="tools"><button class="pill" id="allAir">全選空鳳</button><button class="pill" id="clr">清除</button><input id="sz" type="range" min="40" max="84" value="56" title="頭像大小"></div><main id="list"></main></div>
+<div id="other" class="empty" style="display:none">這個分頁之後階段再做 🌱</div>
+<div id="bar"><input type="date" id="dt"><span id="cnt" style="font-size:13px;color:var(--sub)"></span><button id="go">澆水</button></div>
+<div id="toast"><span id="tmsg"></span><button id="undo">復原</button></div>
+<nav id="tabs"><button class="on" data-t="home"><i>🏠</i>首頁</button><button data-t="x"><i>📖</i>圖鑑</button><button data-t="x"><i>📅</i>月曆</button><button data-t="x"><i>📊</i>統計</button></nav>
+<div class="sheet" id="sheet"><form id="f">
+<h1 style="font-size:18px">新增植物</h1>
+<label>名稱 *</label><input name="name" required>
+<div class="two"><div><label>品種</label><input name="variety"></div><div><label>類別</label><select name="category"><option>鹿角蕨</option><option>空氣鳳梨</option><option>其他</option></select></div></div>
+<div class="two"><div><label>位置</label><input name="place" placeholder="室內／陽台…"></div><div><label>慣用澆水方式</label><select name="habit"><option>澆透</option><option>泡盆</option><option>葉噴</option></select></div></div>
+<div class="two"><div><label>到家日 (YY-MM-DD 或 YY-MM)</label><input name="arrived" placeholder="26-11"></div><div><label>來源</label><input name="source"></div></div>
+<label>來源備註</label><input name="sourceNote"><label>母株 (若為子株)</label><input name="parent"><label>備註</label><textarea name="note" rows="2"></textarea>
+<button class="sub">儲存</button><button type="button" class="sub" style="background:none;color:var(--sub)" id="cancel">取消</button>
+</form></div>
+<script>
+const API='https://script.google.com/macros/s/AKfycbxmVh1SQcKXDq46gnJLM-yBs0hccpnbojb3ii0nVNZcSAZTIuAhey4qu0SS3nZ0Okd8LA/exec';
+const $=s=>document.querySelector(s),pad=n=>String(n).padStart(2,'0');
+const yy=d=>String(d.getFullYear()).slice(2)+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=s=>{const[a,b,c]=String(s).split('-').map(Number);return new Date(2000+a,(b||1)-1,c||1)};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const S={plants:[],logs:[],photos:[],sel:new Set(),size:+(localStorage.sz||56)};
+let token=localStorage.token||'',pending=null;
+$('#dt').value=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+$('#sz').value=S.size;
+
+async function load(){
+  if(!token){token=prompt('請輸入 API token')||'';localStorage.token=token}
+  try{const r=await fetch(API+'?action=getAll&token='+encodeURIComponent(token));let j=await r.json();j=j.data||j;
+    S.plants=j.plants||[];S.logs=j.logs||[];S.photos=j.photos||[];render()}
+  catch(e){$('#list').innerHTML='<div class="empty">讀取失敗，請檢查網路或 token（設定 ⚙︎）</div>'}
+}
+async function post(action,p){
+  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token,action,...p})});
+  const j=await r.json();if(j.ok===false||j.error)throw new Error(j.error||'fail');return j;
+}
+function lastDays(id){
+  let m=null;for(const l of S.logs)if(String(l.plantId)===String(id)){const d=parse(l.date);if(!m||d>m)m=d}
+  if(!m)return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((t-m)/864e5);
+}
+function avatar(p){
+  const sz=S.size,ph=S.photos.find(x=>String(x.id)===String(p.coverId));
+  if(!ph)return`<div class="av" style="width:${sz}px;height:${sz}px">🌿</div>`;
+  let c={};try{c=JSON.parse(p.coverCrop||ph.crop||'{}')}catch(e){}
+  const x=c.x??50,y=c.y??50,z=c.z??1;
+  return`<div class="av" style="width:${sz}px;height:${sz}px"><img loading="lazy" src="https://drive.google.com/thumbnail?id=${ph.fileId}&sz=w400" style="transform-origin:${x}% ${y}%;transform:scale(${z})"></div>`;
+}
+function render(){
+  const ps=S.plants.filter(p=>!p.archivedOn).map(p=>({p,d:lastDays(p.id)})).sort((a,b)=>(b.d??9999)-(a.d??9999));
+  $('#list').innerHTML=ps.length?ps.map(({p,d})=>`<div class="row ${S.sel.has(String(p.id))?'sel':''}" data-id="${esc(p.id)}">${avatar(p)}
+   <div class="info"><div class="nm">${esc(p.name)}</div><div class="meta">${esc([p.variety,p.place,p.habit].filter(Boolean).join('・'))}</div></div>
+   <div class="days">${d===null?'尚無紀錄':`<b>${d}</b>天前`}</div></div>`).join(''):'<div class="empty">還沒有植物，按右上角 ＋ 新增</div>';
+  $('#bar').classList.toggle('show',S.sel.size>0);$('#cnt').textContent=S.sel.size+' 株';
+}
+$('#list').onclick=e=>{const r=e.target.closest('.row');if(!r)return;const id=r.dataset.id;S.sel.has(id)?S.sel.delete(id):S.sel.add(id);render()};
+$('#clr').onclick=()=>{S.sel.clear();render()};
+$('#allAir').onclick=()=>{S.plants.filter(p=>!p.archivedOn&&p.category==='空氣鳳梨').forEach(p=>S.sel.add(String(p.id)));render()};
+$('#sz').oninput=e=>{S.size=+e.target.value;localStorage.sz=S.size;render()};
+
+async function flush(){
+  if(!pending)return;const{items}=pending;clearTimeout(pending.t);pending=null;$('#toast').classList.remove('show');
+  try{await post('addLogs',{items});await load()}catch(e){alert('寫入失敗：'+e.message);await load()}
+}
+$('#go').onclick=async()=>{
+  await flush();
+  const dv=$('#dt').value;const date=yy(new Date(dv+'T00:00:00'));
+  const items=[...S.sel].map(id=>{const p=S.plants.find(x=>String(x.id)===id);return{plantId:id,date,method:p?.habit||'澆透'}});
+  if(!items.length)return;
+  items.forEach(i=>S.logs.push({...i,id:'tmp'+Math.random()}));S.sel.clear();render();
+  pending={items,t:setTimeout(flush,5000)};
+  $('#tmsg').textContent=`已記錄 ${items.length} 株（${date}）`;$('#toast').classList.add('show');
+};
+$('#undo').onclick=()=>{if(!pending)return;clearTimeout(pending.t);pending=null;$('#toast').classList.remove('show');load()};
+addEventListener('pagehide',()=>{if(pending)navigator.sendBeacon?.(API,new Blob([JSON.stringify({token,action:'addLogs',items:pending.items})],{type:'text/plain'}))});
+
+$('#add').onclick=()=>$('#sheet').classList.add('show');
+$('#cancel').onclick=()=>$('#sheet').classList.remove('show');
+$('#f').onsubmit=async e=>{
+  e.preventDefault();const plant=Object.fromEntries(new FormData(e.target));
+  plant.status='在養';
+  try{await post('addPlant',{plant});e.target.reset();$('#sheet').classList.remove('show');await load()}
+  catch(err){alert('新增失敗：'+err.message)}
+};
+$('#cfg').onclick=()=>{const t=prompt('API token',token);if(t!==null){token=t;localStorage.token=t;load()}};
+$('#tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  const h=b.dataset.t==='home';$('#home').style.display=h?'':'none';$('#other').style.display=h?'none':'';$('#bar').style.display=h?'':'none'};
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+load();
+</script></body></html>
